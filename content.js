@@ -1,13 +1,17 @@
+// Listen for right-clicks to store the position
 window.addEventListener('contextmenu', (e) => {
     chrome.runtime.sendMessage({
         action: 'storeRightClick',
-        x: e.clientX,
-        y: e.clientY
+        // CRITICAL CHANGE: Use pageX/pageY instead of clientX/clientY
+        // This makes the coordinate relative to the document, not the viewport.
+        x: e.pageX,
+        y: e.pageY
     });
 });
 
 let stopExecution = false;
 
+// Listen for messages from the background script
 chrome.runtime.onMessage.addListener(async (msg) => {
     if (msg.action === 'runSteps') {
         stopExecution = false;
@@ -16,7 +20,7 @@ chrome.runtime.onMessage.addListener(async (msg) => {
         const loopCount = loop.enabled ? (loop.infinite ? Infinity : loop.count) : 1;
         let currentLoop = 0;
 
-        // Send initial progress
+        // Send initial progress to the popup
         chrome.runtime.sendMessage({
             action: 'progressUpdate',
             data: { stepIndex: 0, totalSteps: steps.length, currentLoop: 1, totalLoops: loopCount }
@@ -40,32 +44,44 @@ chrome.runtime.onMessage.addListener(async (msg) => {
                         }
                     });
 
+                    // Wait for the specified delay
                     await new Promise((res) => setTimeout(res, steps[i].delay));
 
                     if (stopExecution) break;
 
-                    const evt = new MouseEvent('click', {
-                        bubbles: true,
-                        cancelable: true,
-                        clientX: steps[i].x,
-                        clientY: steps[i].y,
-                        view: window
-                    });
+                    // CRITICAL CHANGE: Convert page coordinates back to viewport (client) coordinates
+                    // This ensures the click works correctly even if the page is scrolled.
+                    const clickX = steps[i].x - window.scrollX;
+                    const clickY = steps[i].y - window.scrollY;
 
-                    const element = document.elementFromPoint(steps[i].x, steps[i].y);
+                    // Find the topmost element at the calculated viewport coordinates
+                    const element = document.elementFromPoint(clickX, clickY);
+
                     if (element) {
+                        // Create a realistic click event at the calculated coordinates
+                        const evt = new MouseEvent('click', {
+                            bubbles: true,
+                            cancelable: true,
+                            view: window,
+                            clientX: clickX,
+                            clientY: clickY
+                        });
+                        // Dispatch the click on the found element
                         element.dispatchEvent(evt);
+                    } else {
+                        console.warn(
+                            `Auto Clicker Pro: No element found at page coordinates (${steps[i].x}, ${steps[i].y}). The element might be off-screen or hidden.`
+                        );
                     }
                 }
             }
         } catch (error) {
             console.error('AutoClicker Pro Error:', error);
         } finally {
-            // Send completion message to background script
+            // Notify the background script that execution has finished
             chrome.runtime.sendMessage({ action: 'executionFinished' });
         }
     } else if (msg.action === 'stop') {
         stopExecution = true;
-        // The loop will break, and the finally block will send 'executionFinished'
     }
 });
