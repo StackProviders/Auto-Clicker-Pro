@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <title>Auto Clicker Pro</title>
+        <link rel="stylesheet" href="popup.css" />
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <div class="logo"><img src="./icons/icon48.png" alt="Logo" /></div>
+                <h1>Auto Clicker Pro</h1>
+            </div>
+
+            <button id="start">
+                <span class="icon" id="startIcon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M8 5v14l11-7z"></path>
+                    </svg>
+                </span>
+                <span class="icon" id="stopIcon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M6 6h12v12H6z"></path>
+                    </svg>
+                </span>
+                <span id="startText">Start Sequence</span>
+            </button>
+
+            <div class="loop-controls">
+                <label class="main-label">
+                    <input type="checkbox" id="loopEnabled" />
+                    Enable Looping
+                </label>
+                <div id="loopSettings">
+                    <label>
+                        Loop Count:
+                        <input type="number" id="loopCount" min="1" value="5" />
+                    </label>
+                    <label>
+                        <input type="checkbox" id="loopInfinite" />
+                        Infinite Loop
+                    </label>
+                </div>
+            </div>
+
+            <div class="progress-container">
+                <div id="progressBar"></div>
+            </div>
+            <div id="loopCounter"></div>
+
+            <div class="steps-header">
+                <h2>Recorded Steps</h2>
+                <button id="clearSteps" title="Clear All Steps">Clear All</button>
+            </div>
+
+            <ul id="stepList"></ul>
+
+            <div class="tip-box">
+                <strong>Pro Tip:</strong>
+                Right-click on a page and use the context menu to add new click steps.
+            </div>
+
+            <!-- Start of New Watermark/Footer -->
+            <div class="footer-credit">
+                <span>Developed by </span>
+                <a href="https://www.stackprovider.com" target="_blank" rel="noopener noreferrer"
+                    >StackProvider.com</a
+                >
+            </div>
+            <!-- End of New Watermark/Footer -->
+        </div>
+
+        <div id="editModal" class="modal">
+            <div class="modal-content">
+                <h3>Edit Step Delay</h3>
+                <label for="editDelay">Delay before this click (milliseconds):</label>
+                <input type="number" id="editDelay" min="0" step="100" value="1000" />
+                <div class="modal-buttons">
+                    <button id="cancelEdit">Cancel</button>
+                    <button id="saveEdit">Save</button>
+                </div>
+            </div>
+        </div>
+
+        <script src="popup.js"></script>
+    </body>
+</html>

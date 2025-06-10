@@ -1,0 +1,433 @@
+:root {
+    --primary-color: #007bff;
+    --primary-dark: #0056b3;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --warning-color: #ffc107;
+    --light-bg: #f8f9fa;
+    --white-bg: #ffffff;
+    --text-color: #343a40;
+    --border-color: #dee2e6;
+    --shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+}
+
+body {
+    font-family: 'Segoe UI', 'Roboto', sans-serif;
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    padding: 16px;
+    width: 420px;
+    color: var(--text-color);
+    margin: 0;
+}
+
+.container {
+    background: var(--white-bg);
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+}
+
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+h1 {
+    font-size: 22px;
+    margin: 0;
+    color: var(--primary-dark);
+    font-weight: 700;
+}
+
+#start {
+    background: linear-gradient(135deg, var(--success-color), #218838);
+    color: white;
+    border: none;
+    padding: 14px 25px;
+    border-radius: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    width: 100%;
+    margin-bottom: 20px;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+#start:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(40, 167, 69, 0.3);
+}
+
+#start:disabled {
+    background: #a5d6a7;
+    cursor: not-allowed;
+}
+
+#start.running {
+    background: linear-gradient(135deg, var(--danger-color), #c82333);
+}
+
+#start.running:hover:not(:disabled) {
+    box-shadow: 0 6px 12px rgba(220, 53, 69, 0.3);
+}
+
+#start .icon {
+    width: 20px;
+    height: 20px;
+    display: none;
+}
+#start .icon svg {
+    width: 100%;
+    height: 100%;
+}
+#start #startIcon {
+    display: inline-block;
+}
+#start.running #startIcon {
+    display: none;
+}
+#start.running #stopIcon {
+    display: inline-block;
+}
+
+.loop-controls {
+    background: var(--light-bg);
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+}
+
+.loop-controls .main-label {
+    display: block;
+    margin-bottom: 3px;
+    font-weight: 600;
+    color: var(--primary-dark);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+}
+
+#loopSettings {
+    display: none;
+    margin-left: 28px;
+    margin-top: 10px;
+    display: none;
+}
+#loopSettings label {
+    font-weight: 500;
+    color: #444;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+#loopCount {
+    width: 70px;
+    padding: 6px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+#loopCount:disabled {
+    background: #e9ecef;
+}
+
+.progress-container {
+    width: 100%;
+    background-color: #e9ecef;
+    border-radius: 10px;
+    height: 10px;
+    margin-bottom: 5px;
+    overflow: hidden;
+}
+
+#progressBar {
+    height: 100%;
+    width: 0%;
+    background: var(--primary-color);
+    border-radius: 10px;
+    transition: width 0.3s ease-in-out;
+}
+
+#loopCounter {
+    text-align: center;
+    font-size: 13px;
+    min-height: 18px;
+    color: var(--secondary-color);
+    font-weight: 500;
+}
+
+.steps-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.steps-header h2 {
+    font-size: 18px;
+    margin: 0;
+    color: var(--primary-dark);
+}
+
+#clearSteps {
+    background: #f8f9fa;
+    color: var(--danger-color);
+    border: 1px solid var(--danger-color);
+    padding: 5px 12px;
+    border-radius: 5px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+}
+
+#clearSteps:hover {
+    background: var(--danger-color);
+    color: white;
+}
+
+#stepList {
+    list-style: none;
+    padding: 0;
+    max-height: 220px;
+    overflow-y: auto;
+    margin: 0 -10px;
+    padding: 0 10px;
+}
+
+#stepList::-webkit-scrollbar {
+    width: 6px;
+}
+#stepList::-webkit-scrollbar-track {
+    background: transparent;
+}
+#stepList::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 10px;
+}
+#stepList::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+}
+
+#stepList li {
+    margin: 10px 0;
+    padding: 12px 15px;
+    background: var(--light-bg);
+    border: 1px solid var(--border-color);
+    border-left: 5px solid var(--primary-color);
+    border-radius: 8px;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+#stepList li.active {
+    border-color: var(--success-color);
+    box-shadow: 0 0 10px rgba(40, 167, 69, 0.2);
+    transform: scale(1.02);
+}
+
+.step-content {
+    flex-grow: 1;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+.step-counter {
+    background-color: var(--primary-color);
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+.step-details div {
+    margin-bottom: 2px;
+}
+.step-position {
+    font-weight: 600;
+}
+.step-delay {
+    font-size: 13px;
+    color: var(--secondary-color);
+}
+.step-delay strong {
+    color: var(--primary-dark);
+}
+
+.step-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    background: transparent;
+    border: 1px solid #ccc;
+    color: #555;
+    border-radius: 5px;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.action-btn:hover {
+    transform: scale(1.1);
+}
+.edit-btn:hover {
+    background: var(--warning-color);
+    border-color: var(--warning-color);
+    color: white;
+}
+.remove-btn:hover {
+    background: var(--danger-color);
+    border-color: var(--danger-color);
+    color: white;
+}
+
+.empty-steps {
+    text-align: center;
+    margin-top: 5px;
+    padding: 30px 20px;
+    color: #6c757d;
+    font-style: italic;
+    background: var(--light-bg);
+    border-radius: 8px;
+    border: 1px dashed var(--border-color);
+}
+
+.tip-box {
+    background: #e3f2fd;
+    border-radius: 8px;
+    padding: 12px 15px;
+    margin-top: 15px;
+    font-size: 13px;
+    color: #1976d2;
+    border-left: 4px solid #2196f3;
+}
+.tip-box strong {
+    color: #0d47a1;
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    justify-content: center;
+    align-items: center;
+}
+.modal-content {
+    background: white;
+    padding: 25px 30px;
+    border-radius: 12px;
+    width: 320px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+.modal h3 {
+    margin-top: 0;
+    color: var(--primary-dark);
+    font-size: 20px;
+    margin-bottom: 20px;
+}
+.modal label {
+    display: block;
+    margin: 15px 0 8px;
+    font-weight: 600;
+    color: #444;
+}
+#editDelay {
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 16px;
+}
+#editDelay:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 25px;
+}
+.modal-buttons button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+#saveEdit {
+    background: var(--primary-color);
+    color: white;
+}
+#saveEdit:hover {
+    background: var(--primary-dark);
+}
+#cancelEdit {
+    background: #e9ecef;
+    color: #333;
+}
+#cancelEdit:hover {
+    background: #dee2e6;
+}
+
+/* Footer Credit Styles */
+.footer-credit {
+    text-align: center;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid var(--border-color);
+    font-size: 12px;
+    color: var(--secondary-color);
+}
+
+.footer-credit a {
+    color: var(--primary-dark);
+    font-weight: 600;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.footer-credit a:hover {
+    color: var(--primary-color);
+    text-decoration: underline;
+}
+
+/* A small fix for the logo in popup.html */
+.header .logo img {
+    width: 32px;
+    height: 32px;
+    vertical-align: middle;
+}
