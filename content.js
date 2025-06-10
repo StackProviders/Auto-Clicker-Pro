@@ -1,26 +1,101 @@
-// Listen for right-clicks to store the position
+// Store right-click position for legacy "Add Single Step"
 window.addEventListener('contextmenu', (e) => {
     chrome.runtime.sendMessage({
         action: 'storeRightClick',
-        // CRITICAL CHANGE: Use pageX/pageY instead of clientX/clientY
-        // This makes the coordinate relative to the document, not the viewport.
         x: e.pageX,
         y: e.pageY
     });
 });
 
+// --- New Recording Feature ---
+
+// This handler will be activated only when recording
+const recordClickHandler = (e) => {
+    // Prevent the click from triggering navigation or other default actions
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Send the coordinates to the background script to save as a new step
+    chrome.runtime.sendMessage({
+        action: 'addNewStep',
+        x: e.pageX,
+        y: e.pageY
+    });
+
+    // Visual feedback for the user on the page
+    createClickIndicator(e.pageX, e.pageY);
+};
+
+// Create a visual indicator where the user clicked
+const createClickIndicator = (x, y) => {
+    const indicator = document.createElement('div');
+    // Using a class from content.css for styling
+    indicator.className = 'acp-click-indicator';
+    indicator.style.left = `${x}px`;
+    indicator.style.top = `${y}px`;
+    document.body.appendChild(indicator);
+    setTimeout(() => {
+        indicator.style.opacity = '0';
+        setTimeout(() => indicator.remove(), 500);
+    }, 200);
+};
+
+// Show a persistent banner on the page during recording
+const showRecordingBanner = () => {
+    let banner = document.getElementById('acp-recorder-banner');
+    if (banner) return; // Banner already exists
+
+    banner = document.createElement('div');
+    banner.id = 'acp-recorder-banner';
+    banner.innerHTML = `
+        <div class="acp-banner-icon">🔴</div>
+        <div class="acp-banner-text">
+            <strong>Recording Clicks</strong>
+            <span>Press the <b>Esc</b> key to stop</span>
+        </div>
+    `;
+    document.body.appendChild(banner);
+
+    // Listen for Escape key to stop recording
+    document.addEventListener('keydown', escapeKeyListener);
+};
+
+// Hide the banner
+const hideRecordingBanner = () => {
+    const banner = document.getElementById('acp-recorder-banner');
+    if (banner) banner.remove();
+    document.removeEventListener('keydown', escapeKeyListener);
+};
+
+// The listener for the Escape key
+const escapeKeyListener = (e) => {
+    if (e.key === 'Escape') {
+        chrome.runtime.sendMessage({ action: 'stopRecording' });
+    }
+};
+
+// --- Main Message Listener ---
+
 let stopExecution = false;
 
-// Listen for messages from the background script
 chrome.runtime.onMessage.addListener(async (msg) => {
-    if (msg.action === 'runSteps') {
+    // New Recording Session Control
+    if (msg.action === 'startRecordingSession') {
+        document.addEventListener('click', recordClickHandler, true); // Use capture to get the event first
+        showRecordingBanner();
+    } else if (msg.action === 'stopRecordingSession') {
+        document.removeEventListener('click', recordClickHandler, true);
+        hideRecordingBanner();
+    }
+
+    // Existing Step Execution Logic
+    else if (msg.action === 'runSteps') {
         stopExecution = false;
         const steps = msg.steps;
         const loop = msg.loop || { enabled: false, infinite: false, count: 1 };
         const loopCount = loop.enabled ? (loop.infinite ? Infinity : loop.count) : 1;
         let currentLoop = 0;
 
-        // Send initial progress to the popup
         chrome.runtime.sendMessage({
             action: 'progressUpdate',
             data: { stepIndex: 0, totalSteps: steps.length, currentLoop: 1, totalLoops: loopCount }
@@ -29,11 +104,8 @@ chrome.runtime.onMessage.addListener(async (msg) => {
         try {
             while (currentLoop < loopCount && !stopExecution) {
                 currentLoop++;
-
                 for (let i = 0; i < steps.length; i++) {
                     if (stopExecution) break;
-
-                    // Update progress for popup
                     chrome.runtime.sendMessage({
                         action: 'progressUpdate',
                         data: {
@@ -43,22 +115,14 @@ chrome.runtime.onMessage.addListener(async (msg) => {
                             totalLoops: loopCount
                         }
                     });
-
-                    // Wait for the specified delay
                     await new Promise((res) => setTimeout(res, steps[i].delay));
-
                     if (stopExecution) break;
 
-                    // CRITICAL CHANGE: Convert page coordinates back to viewport (client) coordinates
-                    // This ensures the click works correctly even if the page is scrolled.
                     const clickX = steps[i].x - window.scrollX;
                     const clickY = steps[i].y - window.scrollY;
-
-                    // Find the topmost element at the calculated viewport coordinates
                     const element = document.elementFromPoint(clickX, clickY);
 
                     if (element) {
-                        // Create a realistic click event at the calculated coordinates
                         const evt = new MouseEvent('click', {
                             bubbles: true,
                             cancelable: true,
@@ -66,11 +130,10 @@ chrome.runtime.onMessage.addListener(async (msg) => {
                             clientX: clickX,
                             clientY: clickY
                         });
-                        // Dispatch the click on the found element
                         element.dispatchEvent(evt);
                     } else {
                         console.warn(
-                            `Auto Clicker Pro: No element found at page coordinates (${steps[i].x}, ${steps[i].y}). The element might be off-screen or hidden.`
+                            `Auto Clicker Pro: No element found at page coordinates (${steps[i].x}, ${steps[i].y}).`
                         );
                     }
                 }
@@ -78,7 +141,6 @@ chrome.runtime.onMessage.addListener(async (msg) => {
         } catch (error) {
             console.error('AutoClicker Pro Error:', error);
         } finally {
-            // Notify the background script that execution has finished
             chrome.runtime.sendMessage({ action: 'executionFinished' });
         }
     } else if (msg.action === 'stop') {

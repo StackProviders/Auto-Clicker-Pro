@@ -13,24 +13,57 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveEdit = document.getElementById('saveEdit');
     const cancelEdit = document.getElementById('cancelEdit');
     const clearStepsBtn = document.getElementById('clearSteps');
+    const recordBtn = document.getElementById('recordBtn');
+    const recordBtnText = recordBtn.querySelector('.text');
 
     let editIndex = null;
-    let uiControls = [loopEnabled, loopCount, loopInfinite, clearStepsBtn];
+    // CRITICAL FIX: Removed 'startBtn' from this array.
+    // This array now only contains controls that should be disabled during an operation.
+    const secondaryControls = [loopEnabled, loopCount, loopInfinite, clearStepsBtn, recordBtn];
 
-    // --- UI Update Function ---
-    function updateUI(isRunning) {
+    // --- Main UI Update Function ---
+    function updateUI(isRunning, isRecording) {
+        // Handle Running State
         if (isRunning) {
             startText.textContent = 'Stop Execution';
             startBtn.classList.add('running');
-            uiControls.forEach((el) => (el.disabled = true));
+            startBtn.disabled = false; // Ensure the stop button is ALWAYS enabled.
+
+            // Disable all other controls
+            recordBtn.disabled = true;
+            clearStepsBtn.disabled = true;
+            loopEnabled.disabled = true;
+            loopCount.disabled = true;
+            loopInfinite.disabled = true;
             stepList.classList.add('running');
+        } else if (isRecording) {
+            // Handle Recording State
+            recordBtnText.textContent = 'Stop';
+            recordBtn.classList.add('recording');
+            recordBtn.disabled = false; // Ensure record button is enabled to be stopped.
+
+            // Disable all other controls
+            startBtn.disabled = true;
+            clearStepsBtn.disabled = true;
+            loopEnabled.disabled = true;
+            loopCount.disabled = true;
+            loopInfinite.disabled = true;
         } else {
+            // Handle Idle State (Neither running nor recording)
             startText.textContent = 'Start Sequence';
             startBtn.classList.remove('running');
-            uiControls.forEach((el) => (el.disabled = false));
-            // Re-apply disabled state based on checkboxes
-            loopCount.disabled = loopInfinite.checked || !loopEnabled.checked;
+            recordBtnText.textContent = 'Record';
+            recordBtn.classList.remove('recording');
             stepList.classList.remove('running');
+
+            // Enable all controls
+            startBtn.disabled = false;
+            recordBtn.disabled = false;
+            clearStepsBtn.disabled = false;
+            loopEnabled.disabled = false;
+
+            // Re-apply specific logic for loop controls
+            handleLoopControlsChange();
             resetProgress();
         }
     }
@@ -88,14 +121,12 @@ document.addEventListener('DOMContentLoaded', () => {
                         alert('Please add at least one step before starting.');
                         return;
                     }
-                    // CRITICAL FIX: Save loop settings to storage before starting
                     const loopSettings = {
                         enabled: loopEnabled.checked,
                         infinite: loopInfinite.checked,
                         count: parseInt(loopCount.value) || 1
                     };
                     chrome.storage.local.set({ loopSettings }, () => {
-                        // Now tell the background script to start
                         chrome.runtime.sendMessage({ action: 'startSequence' });
                     });
                 });
@@ -103,12 +134,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    // --- Other Functions (unchanged from previous correct version) ---
+    // --- New Record Button Logic ---
+    recordBtn.addEventListener('click', () => {
+        chrome.storage.local.get('isRecording', (data) => {
+            if (data.isRecording) {
+                chrome.runtime.sendMessage({ action: 'stopRecording' });
+            } else {
+                if (
+                    confirm(
+                        'You are about to start recording.\n\n- All clicks on the page will be added as steps.\n- The popup will close automatically.\n\nPress the "Esc" key on your keyboard to stop recording.'
+                    )
+                ) {
+                    chrome.runtime.sendMessage({ action: 'startRecording' });
+                    window.close(); // Close popup to allow user to interact with the page
+                }
+            }
+        });
+    });
+
+    // --- Other Functions ---
     function removeStep(index) {
         chrome.storage.local.get(['steps'], (data) => {
             let steps = data.steps || [];
             steps.splice(index, 1);
-            chrome.storage.local.set({ steps }); // on-change listener will re-render
+            chrome.storage.local.set({ steps });
         });
     }
 
@@ -183,31 +232,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Real-time Listeners ---
     chrome.runtime.onMessage.addListener((msg) => {
-        if (msg.action === 'stepsUpdated') {
-            chrome.storage.local.get(['steps'], (data) => renderSteps(data.steps));
-        } else if (msg.action === 'progressUpdate') {
+        if (msg.action === 'progressUpdate') {
             updateProgress(msg.data);
         }
     });
 
     chrome.storage.onChanged.addListener((changes, area) => {
         if (area === 'local') {
-            if (changes.isRunning) {
-                updateUI(changes.isRunning.newValue);
-            }
-            if (changes.steps) {
-                renderSteps(changes.steps.newValue);
-            }
+            chrome.storage.local.get(['isRunning', 'isRecording', 'steps'], (data) => {
+                updateUI(data.isRunning, data.isRecording);
+                if (changes.steps) {
+                    renderSteps(changes.steps.newValue || []);
+                }
+            });
         }
     });
 
     // --- Initial Load ---
     function initializePopup() {
-        chrome.storage.local.get(['steps', 'isRunning', 'loopSettings'], (data) => {
+        chrome.storage.local.get(['steps', 'isRunning', 'isRecording', 'loopSettings'], (data) => {
             renderSteps(data.steps || []);
-            updateUI(data.isRunning || false);
+            updateUI(data.isRunning || false, data.isRecording || false);
 
-            // Restore loop controls state
             const settings = data.loopSettings || { enabled: false, infinite: false, count: 5 };
             loopEnabled.checked = settings.enabled;
             loopInfinite.checked = settings.infinite;

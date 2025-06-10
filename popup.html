@@ -50,24 +50,36 @@
 
             <div class="steps-header">
                 <h2>Recorded Steps</h2>
-                <button id="clearSteps" title="Clear All Steps">Clear All</button>
+                <div class="header-actions">
+                    <button
+                        id="recordBtn"
+                        class="header-btn record-btn"
+                        title="Record a new sequence"
+                    >
+                        <span class="icon record-icon">🔴</span>
+                        <span class="icon stop-record-icon">■</span>
+                        <span class="text">Record</span>
+                    </button>
+                    <button id="clearSteps" class="header-btn clear-btn" title="Clear All Steps">
+                        Clear All
+                    </button>
+                </div>
             </div>
 
             <ul id="stepList"></ul>
 
             <div class="tip-box">
                 <strong>Pro Tip:</strong>
-                Right-click on a page and use the context menu to add new click steps.
+                Use the 'Record' button to capture a sequence of clicks. Press the <b>Esc</b> key to
+                stop recording.
             </div>
 
-            <!-- Start of New Watermark/Footer -->
             <div class="footer-credit">
                 <span>Developed by </span>
                 <a href="https://www.stackprovider.com" target="_blank" rel="noopener noreferrer"
                     >StackProvider.com</a
                 >
             </div>
-            <!-- End of New Watermark/Footer -->
         </div>
 
         <div id="editModal" class="modal">
